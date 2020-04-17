@@ -10,21 +10,24 @@ from pdfminer.converter import PDFPageAggregator
 import pdfminer
 import tkinter as tk
 from tkinter import filedialog
+import webbrowser
+import codecs
 
 path = ""
 tekst = ""
 pages = []
+info = [] #type, year, name, start, end
 
 def parsiraj():
 	# Open a PDF file.
-	fp = open('C:/Users/Boris/Documents/task-scrapper/kolo6_zadaci.pdf', 'rb')
+	fp = open(path, 'rb')
 
 	# Create a PDF parser object associated with the file object.
 	parser = PDFParser(fp)
 
 	# Create a PDF document object that stores the document structure.
 	# Password for initialization as 2nd parameter
-	document = PDFDocument(parser)
+	document = PDFDocument(parser) 
 
 	# Check if the document allows text extraction. If not, abort.
 	if not document.is_extractable:
@@ -90,8 +93,97 @@ def get_pdf():
 	if (ans[0] == 'y'):
 		openPDF()
 	load()
-	#print(path)
+
+def get_info():
+	type = input("HONI ili Infokup? [h/i]\n");
+	info.append(type)
+
+	year = int(input("Koja godina? [Ako je HONI i npr. sezona 2019/2020 stavi \"2020\"]\n"))
+	info.append(year)
+
+	task_name = input("Ime zadatka? [Onako kako je napisano npr. \"MANIPULATOR\" i \"Skandi\"]\n");
+	info.append(task_name)
+
+	l, r = input("Od koje do koje stranice? [npr. \"6 9\" i \"1 1\"]\n").split()
+	l = int(l) - 1
+	r = int(r)
+	info.append(l)
+	info.append(r)
+
+def solve():
+	l = info[-2]
+	r = info[-1]
+	if info[0] == 'h': #ako su honi zadaci
+		if (info[1] == 2020): # 2020 godina
+			fp = codecs.open("parsed.txt", "w", "utf-8")
+			text = ""
+			for i in range(l, r):
+				rev = pages[i][::-1]
+				lenght = len(pages[i])
+				page = ""
+
+				first = 0
+				cnt = 0
+				while (cnt < 4):
+					if (pages[i][first] == '\n'):
+						cnt += 1
+					first += 1
+
+				for j in range(lenght - 2, 0, -1):
+					if (pages[i][j] == '\n'):
+						page = pages[i][first:j]
+						break
+
+				text += page + '\n'
+
+			sol = text.split('\n')
+			sol = sol[1:]
+
+			parsed = []
+			izlaz = 0
+			for line in sol: #pretvaranje parsiranih linija u markdown type
+				if line.startswith("Ulazni podaci"):
+					parsed.append( "##" + line )
+				elif line.startswith("Izlazni podaci"):
+					parsed.append( "##" + line )
+				elif line.startswith("Bodovanje"):
+					parsed.append( "##" + line )
+				elif line.startswith("ulaz"):
+					if (izlaz):
+						parsed.append("```")
+					parsed.append( "###" + line )
+					parsed.append( "```" )
+				elif line.startswith("izlaz"):
+					parsed.append( "```" )
+					parsed.append( "###" + line )
+					parsed.append( "```" )
+					izlaz = 1
+				elif line.startswith("Probni primjeri"):
+					parsed.append( "##" + line )
+				elif line.startswith("Pojašnjenje "):
+					if izlaz:
+						parsed.append( "```")
+					izlaz = 0
+					for j in range(0, len(line)):
+						if (line[j] == ':'):
+							parsed.append("###" + line[:j + 1])
+							parsed.append(line[j + 1:])
+							break;
+				else:
+					parsed.append(line)
+			if (izlaz):
+				parsed.append("```")
+
+			sol = "\n".join(parsed)
+			fp.write(sol)
+
+	else: #infokup4life
+		print("Not ready yet\n")
+
+	webbrowser.open("parsed.txt")
+
 
 get_pdf()
 parsiraj()
-print(pages[1])
+get_info() 
+solve()
