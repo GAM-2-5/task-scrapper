@@ -178,7 +178,69 @@ def solve():
 			fp.write(sol)
 
 	else: #infokup4life
-		print("Not ready yet\n")
+		if (info[1] == 2020):
+			fp = codecs.open("parsed.txt", "w", "utf-8")
+			text = ""
+			for i in range(l, r):
+				rev = pages[i][::-1]
+				lenght = len(pages[i])
+				page = ""
+
+				first = 0
+				cnt = 0
+				while (cnt < 4):
+					if (pages[i][first] == '\n'):
+						cnt += 1
+					first += 1
+
+				for j in range(lenght - 2, 0, -1):
+					if (pages[i][j] == '\n'):
+						page = pages[i][first:j]
+						break
+
+				text += page + '\n'
+
+			sol = text.split('\n')
+			sol = sol[1:]
+
+			parsed = []
+			izlaz = 0
+
+			for line in sol: #pretvaranje parsiranih linija u markdown type
+				if line.startswith("Ulazni podatci"):
+					parsed.append( "##" + line )
+				elif line.startswith("Izlazni podatci"):
+					parsed.append( "##" + line )
+				elif line.startswith("Bodovanje"):
+					parsed.append( "##" + line )
+				elif line.startswith("ulaz"):
+					if (izlaz):
+						parsed.append("```")
+					parsed.append( "###" + line )
+					parsed.append( "```" )
+				elif line.startswith("izlaz"):
+					parsed.append( "```" )
+					parsed.append( "###" + line )
+					parsed.append( "```" )
+					izlaz = 1
+				elif line.startswith("Probni primjeri"):
+					parsed.append( "##" + line )
+				elif line.startswith("Pojašnjenje "):
+					if izlaz:
+						parsed.append( "```")
+					izlaz = 0
+					for j in range(0, len(line)):
+						if (line[j] == ':'):
+							parsed.append("###" + line[:j + 1])
+							parsed.append(line[j + 1:])
+							break;
+				else:
+					parsed.append(line)
+			if (izlaz):
+				parsed.append("```")
+
+			sol = "\n".join(parsed)
+			fp.write(sol)
 
 	webbrowser.open("parsed.txt")
 
