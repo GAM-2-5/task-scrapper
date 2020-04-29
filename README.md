@@ -1,7 +1,9 @@
 # task-scrapper
-pretvaranje pdf-ova zadataka s infokupa i honi-ja u markdown za evaluator
+Program za pretvaranje pdf-ova zadataka s infokupa i honi-ja u markdown za evaluator.
 
 ## trenutno podržane godine:
-honi: 2020 - 2020
+honi: 2008 - 2020
 
-infokup: N/A 
+Kako je većina starih godina(sve osim 2020) loše formatirana, pdfminer kojim vadim text iz pdf-a ne radi na njima, pa se trebaju staviti u tekst datoteku. Za više informacija pogledajte dokumentaciju.
+
+infokup: 2020
