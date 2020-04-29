@@ -12,11 +12,15 @@ import tkinter as tk
 from tkinter import filedialog
 import webbrowser
 import codecs
+from parsing_parameters import pars_params
 
 path = ""
 tekst = ""
 pages = []
+num_of_tc = 0
 info = [] #type, year, name, start, end
+vec_parsiran = 0
+pdf_or_text = 0
 
 def parsiraj():
 	# Open a PDF file.
@@ -74,25 +78,29 @@ def parsiraj():
 		parse_obj(layout._objs)
 		pages.append(tekst)
 
-
-def openPDF():
+def get_path():
 	root = tk.Tk()
 	root.withdraw()
 	path = filedialog.askopenfilename()
 	fp = open("path.txt", "w")
 	fp.write(path)
 
-def load():
+def load_pdf():
+	global path
+	fp = open("path.txt", "r")
+	path = fp.readline()
+
+def load_text():
 	global path
 	fp = open("path.txt", "r")
 	path = fp.readline()
 
 def get_pdf():
-	print("Otvori novi PDF? [y/n]")
-	ans = input()
-	if (ans[0] == 'y'):
-		openPDF()
-	load()
+	# print("Otvori novi PDF? [y/n]")
+	# ans = input()
+	# if (ans[0] == 'y'):
+	get_path()
+	load_pdf()
 
 def get_info():
 	type = input("HONI ili Infokup? [h/i]\n");
@@ -104,148 +112,325 @@ def get_info():
 	task_name = input("Ime zadatka? [Onako kako je napisano npr. \"MANIPULATOR\" i \"Skandi\"]\n");
 	info.append(task_name)
 
-	l, r = input("Od koje do koje stranice? [npr. \"6 9\" i \"1 1\"]\n").split()
-	l = int(l) - 1
-	r = int(r)
-	info.append(l)
-	info.append(r)
+	global pdf_or_text
+	if pdf_or_text == 0:
+		l, r = input("Od koje do koje stranice? [npr. \"6 9\" i \"1 1\"]\n").split()
+		l = int(l) - 1
+		r = int(r)
+		info.append(l)
+		info.append(r)
+	else:
+		info.append(0)
+		info.append(1)
+
+	# global num_of_tc
+	# num_of_tc = int(input("Koliko test podataka unutar teksta zadatka?\n"))
+
+def not_empty(line):
+	for x in line:
+		if (x != ' '):
+			return 1
+	return 0
+
+def get_text():
+	inp = input("Parsiranje iz .pdf ili .txt filea? [p/t]\n")
+	global pdf_or_text
+	if (inp[0] == 'p'):
+		pdf_or_text = 0
+		get_pdf()
+		parsiraj()
+	else:
+		pdf_or_text = 1
+		get_path()
+		load_text()
+		fp = codecs.open(path, "rb", "utf-8")
+		tekst = fp.read()
+		print(tekst)
+		pages.append(tekst)
 
 def solve():
+	global pdf_or_text
 	l = info[-2]
 	r = info[-1]
 	if info[0] == 'h': #ako su honi zadaci
 		if (info[1] == 2020): # 2020 godina
+			#uzimanje teksta
 			fp = codecs.open("parsed.txt", "w", "utf-8")
 			text = ""
 			for i in range(l, r):
-				rev = pages[i][::-1]
-				lenght = len(pages[i])
-				page = ""
+				if pdf_or_text == 0:
+					rev = pages[i][::-1]
+					lenght = len(pages[i])
+					page = ""
 
-				first = 0
-				cnt = 0
-				while (cnt < 4):
-					if (pages[i][first] == '\n'):
-						cnt += 1
-					first += 1
+					first = 0
+					cnt = 0
+					while (cnt < 4):
+						if (pages[i][first] == '\n'):
+							cnt += 1
+						first += 1
 
-				for j in range(lenght - 2, 0, -1):
-					if (pages[i][j] == '\n'):
-						page = pages[i][first:j]
-						break
+					for j in range(lenght - 2, 0, -1):
+						if (pages[i][j] == '\n'):
+							page = pages[i][first:j]
+							break
+				else:
+					page = pages[i]
 
 				text += page + '\n'
 
 			sol = text.split('\n')
 			sol = sol[1:]
 
+			#parametri
 			parsed = []
 			izlaz = 0
-			for line in sol: #pretvaranje parsiranih linija u markdown type
-				if line.startswith("Ulazni podaci"):
-					parsed.append( "##" + line )
-				elif line.startswith("Izlazni podaci"):
-					parsed.append( "##" + line )
-				elif line.startswith("Bodovanje"):
-					parsed.append( "##" + line )
-				elif line.startswith("ulaz"):
-					if (izlaz):
-						parsed.append("```")
-					parsed.append( "###" + line )
-					parsed.append( "```" )
-				elif line.startswith("izlaz"):
-					parsed.append( "```" )
-					parsed.append( "###" + line )
-					parsed.append( "```" )
-					izlaz = 1
-				elif line.startswith("Probni primjeri"):
-					parsed.append( "##" + line )
-				elif line.startswith("Pojašnjenje "):
-					if izlaz:
-						parsed.append( "```")
-					izlaz = 0
-					for j in range(0, len(line)):
-						if (line[j] == ':'):
-							parsed.append("###" + line[:j + 1])
-							parsed.append(line[j + 1:])
-							break;
+			ulaz = 0
+
+			headings = pars_params["honi"][2020]["headings"].keys()
+			io = pars_params["honi"][2020]["io"].keys()
+
+			#dodatno namjestanje
+			sol2 = []
+			for line in sol:
+				if (not_empty(line) == 0):
+					continue
+				if (line.startswith("Pojašnjenje")):
+					prva_dt = 0
+					for i in range(0, 1000):
+						if (line[i] == ':'):
+							prva_dt = i
+							break
+					sol2.append(line[:prva_dt + 1])
+					sol2.append(line[prva_dt + 2:])
 				else:
+					sol2.append(line)
+			sol = sol2
+
+			#pretvaranje parsiranih linija u markdown type
+			for line in sol: 
+				done = 0
+				for el in headings:
+					if (line.startswith(el)):
+						if (el == "Pojašnjenje " and (izlaz | ulaz) == 1):
+							parsed.append("```")
+						parsed.append(pars_params["honi"][2020]["headings"][el] + line)
+						done = 1
+
+				for el in io:
+					if (line.startswith(el)):
+						if (ulaz or izlaz):
+							parsed.append("```")
+						parsed.append(pars_params["honi"][2020]["io"][el] + line)
+						parsed.append("```")
+						done = 1
+						if (el == "ulaz"):
+							ulaz = 1
+						if (el == "izlaz"):
+							izlaz += 1
+						parsed.append
+				if done == 0:
 					parsed.append(line)
-			if (izlaz):
-				parsed.append("```")
 
 			sol = "\n".join(parsed)
 			fp.write(sol)
 
+		else: #sve ostale, mogu samo s tekstom
+			#uzimanje teksta
+			fp = codecs.open("parsed.txt", "w", "utf-8")
+			text = ""
+
+			for i in range(l, r):
+				if pdf_or_text == 0:
+					print("Nemoguce parsirati pdf iz ove godine!")
+					return
+					rev = pages[i][::-1]
+					lenght = len(pages[i])
+					page = ""
+
+					first = 0
+					cnt = 0
+					while (cnt < 4):
+						if (pages[i][first] == '\n'):
+							cnt += 1
+						first += 1
+
+					for j in range(lenght - 2, 0, -1):
+						if (pages[i][j] == '\n'):
+							page = pages[i][first:j]
+							break
+				else:
+					page = pages[i]
+
+				# for j in range(lenght - 2, 0, -1):
+				# 	if (pages[i][j] == '\n'):
+				# 		page = pages[i][first:j]
+				# 		break
+				#print(pages[i])
+				#print(pages[i])
+				text += page + '\n'
+
+			sol = text.split('\n')
+
+			#parametri
+			parsed = []
+			izlaz = 0
+			ulaz = 0
+
+			headings = pars_params["honi"][2019]["headings"].keys()
+			io = pars_params["honi"][2019]["io"].keys()
+
+			#dodatno namjestanje
+			sol2 = []
+			for line in sol:
+				if (not_empty(line) == 0):
+					continue
+				if (line.startswith("PRIMJERI TEST PODATAKA")):
+					continue
+				if (line.startswith("Pojašnjenje ")):
+					prva_dt = 0
+					for i in range(0, 1000):
+						if (line[i] == ':'):
+							prva_dt = i
+							break
+					sol2.append(line[:prva_dt + 1])
+					sol2.append(line[prva_dt + 2:])
+				else:
+					sol2.append(line)
+			sol = sol2
+
+			prvi = 0
+			#pretvaranje parsiranih linija u markdown type
+			for line in sol: 
+				done = 0
+				for el in headings:
+					if (line.startswith(el)):
+						if (el == "Pojašnjenje " and (ulaz + izlaz) != 0):
+							parsed.append("```")
+							ulaz = 0
+							izlaz = 0
+						if (el == "Pojašnjenje "):
+							parsed.append(pars_params["honi"][2019]["headings"][el] + line)
+						else:
+							parsed.append(pars_params["honi"][2019]["headings"][el])
+						done = 1
+
+				for el in io:
+					if (line.startswith(el)):
+						if (ulaz or izlaz):
+							parsed.append("```")
+						if (prvi == 0):
+							prvi = 1
+							parsed.append("##Probni primjeri")
+						parsed.append(pars_params["honi"][2019]["io"][el] + line)
+						parsed.append("```")
+						done = 1
+						if (el == "ulaz"):
+							ulaz = 1
+						if (el == "izlaz"):
+							izlaz = 1
+						parsed.append
+				if done == 0:
+					parsed.append(line)
+
+			if (izlaz == 1):
+				parsed.append("```")
+			sol = "\n".join(parsed)
+			fp.write(sol)
+
+
+	#INFOKUP
+
 	else: #infokup4life
 		if (info[1] == 2020):
+			#uzimanje teksta
 			fp = codecs.open("parsed.txt", "w", "utf-8")
 			text = ""
 			for i in range(l, r):
-				rev = pages[i][::-1]
-				lenght = len(pages[i])
-				page = ""
+				if pdf_or_text == 0:
+					rev = pages[i][::-1]
+					lenght = len(pages[i])
+					page = ""
 
-				first = 0
-				cnt = 0
-				while (cnt < 4):
-					if (pages[i][first] == '\n'):
-						cnt += 1
-					first += 1
+					first = 0
+					cnt = 0
+					while (cnt < 4):
+						if (pages[i][first] == '\n'):
+							cnt += 1
+						first += 1
 
-				for j in range(lenght - 2, 0, -1):
-					if (pages[i][j] == '\n'):
-						page = pages[i][first:j]
-						break
-
-				text += page + '\n'
+					for j in range(lenght - 2, 0, -1):
+						if (pages[i][j] == '\n'):
+							page = pages[i][first:j]
+							break
+				else:
+					page = pages[i]
 
 			sol = text.split('\n')
 			sol = sol[1:]
 
+			#parametri
 			parsed = []
 			izlaz = 0
+			ulaz = 0
 
-			for line in sol: #pretvaranje parsiranih linija u markdown type
-				if line.startswith("Ulazni podatci"):
-					parsed.append( "##" + line )
-				elif line.startswith("Izlazni podatci"):
-					parsed.append( "##" + line )
-				elif line.startswith("Bodovanje"):
-					parsed.append( "##" + line )
-				elif line.startswith("ulaz"):
-					if (izlaz):
-						parsed.append("```")
-					parsed.append( "###" + line )
-					parsed.append( "```" )
-				elif line.startswith("izlaz"):
-					parsed.append( "```" )
-					parsed.append( "###" + line )
-					parsed.append( "```" )
-					izlaz = 1
-				elif line.startswith("Probni primjeri"):
-					parsed.append( "##" + line )
-				elif line.startswith("Pojašnjenje "):
-					if izlaz:
-						parsed.append( "```")
-					izlaz = 0
-					for j in range(0, len(line)):
-						if (line[j] == ':'):
-							parsed.append("###" + line[:j + 1])
-							parsed.append(line[j + 1:])
-							break;
+			headings = pars_params["infokup"][2020]["headings"].keys()
+			io = pars_params["infokup"][2020]["io"].keys()
+
+			#dodatno namjestanje
+			sol2 = []
+			for line in sol:
+				if (not_empty(line) == 0):
+					continue
+				if (line.startswith("Pojašnjenje")):
+					prva_dt = 0
+					for i in range(0, 1000):
+						if (line[i] == ':'):
+							prva_dt = i
+							break
+					sol2.append(line[:prva_dt + 1])
+					sol2.append(line[prva_dt + 2:])
 				else:
+					sol2.append(line)
+			sol = sol2
+
+			#pretvaranje parsiranih linija u markdown type
+			for line in sol: 
+				done = 0
+				for el in headings:
+					if (line.startswith(el)):
+						if (el == "Pojašnjenje " and izlaz == num_of_tc):
+							parsed.append("```")
+						parsed.append(pars_params["infokup"][2020]["headings"][el] + line)
+						done = 1
+
+				for el in io:
+					if (line.startswith(el)):
+						if (ulaz or izlaz):
+							parsed.append("```")
+						parsed.append(pars_params["infokup"][2020]["io"][el] + line)
+						parsed.append("```")
+						done = 1
+						if (el == "ulaz"):
+							ulaz = 1
+						if (el == "izlaz"):
+							izlaz += 1
+						parsed.append
+				if done == 0:
 					parsed.append(line)
-			if (izlaz):
-				parsed.append("```")
 
 			sol = "\n".join(parsed)
 			fp.write(sol)
 
 	webbrowser.open("parsed.txt")
 
+def print_all():
+	global pages
+	for x in pages:
+		print(x)
 
-get_pdf()
-parsiraj()
+get_text()
 get_info() 
 solve()
+
+
