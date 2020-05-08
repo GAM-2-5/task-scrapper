@@ -145,7 +145,7 @@ def get_text():
 		load_text()
 		fp = codecs.open(path, "rb", "utf-8")
 		tekst = fp.read()
-		print(tekst)
+		#print(tekst)
 		pages.append(tekst)
 
 def solve():
@@ -212,8 +212,9 @@ def solve():
 				done = 0
 				for el in headings:
 					if (line.startswith(el)):
-						if (el == "Pojašnjenje " and (izlaz | ulaz) == 1):
+						if (el == "Pojašnjenje " and (izlaz | ulaz) != 0):
 							parsed.append("```")
+						izlaz = ulaz = 0
 						parsed.append(pars_params["honi"][2020]["headings"][el] + line)
 						done = 1
 
@@ -365,9 +366,11 @@ def solve():
 							break
 				else:
 					page = pages[i]
+				text += page
 
 			sol = text.split('\n')
 			sol = sol[1:]
+
 
 			#parametri
 			parsed = []
@@ -399,8 +402,10 @@ def solve():
 				done = 0
 				for el in headings:
 					if (line.startswith(el)):
-						if (el == "Pojašnjenje " and izlaz == num_of_tc):
+						if (el == "Pojašnjenje " and (izlaz + ulaz) != 0):
 							parsed.append("```")
+							ulaz = 0
+							izlaz = 0
 						parsed.append(pars_params["infokup"][2020]["headings"][el] + line)
 						done = 1
 
@@ -419,6 +424,289 @@ def solve():
 				if done == 0:
 					parsed.append(line)
 
+			if (ulaz + izlaz != 0):
+				parsed.append("```")
+
+			sol = "\n".join(parsed)
+			fp.write(sol)
+		elif info[1] >= 2018:
+			fp = codecs.open("parsed.txt", "w", "utf-8")
+			text = ""
+
+			for i in range(l, r):
+				if pdf_or_text == 0:
+					rev = pages[i][::-1]
+					lenght = len(pages[i])
+					page = ""
+
+					#print(pages[i])
+					first = 0
+					cnt = 0
+					while (cnt < 6):
+						if (pages[i][first] == '\n'):
+							cnt += 1
+						first += 1
+
+					for j in range(lenght - 2, 0, -1):
+						if (pages[i][j] == '\n'):
+							page = pages[i][first:j]
+							break
+				else:
+					page = pages[i]
+
+				# for j in range(lenght - 2, 0, -1):
+				# 	if (pages[i][j] == '\n'):
+				# 		page = pages[i][first:j]
+				# 		break
+				#print(pages[i])
+				#print(pages[i])
+				text += page + '\n'
+
+			sol = text.split('\n')
+
+			#parametri
+			parsed = []
+			izlaz = 0
+			ulaz = 0
+
+			headings = pars_params["infokup"][2019]["headings"].keys()
+			io = pars_params["infokup"][2019]["io"].keys()
+
+			#dodatno namjestanje
+			sol2 = []
+			for line in sol:
+				if (not_empty(line) == 0):
+					continue
+				if (line.startswith("PRIMJERI TEST PODATAKA") or line.startswith("PROBNI PRIMJERI")):
+					continue
+				if (line.startswith("Pojašnjenje ")):
+					prva_dt = 0
+					for i in range(0, 1000):
+						if (line[i] == ':'):
+							prva_dt = i
+							break
+					sol2.append(line[:prva_dt + 1])
+					sol2.append(line[prva_dt + 2:])
+				else:
+					sol2.append(line)
+			sol = sol2
+
+			prvi = 0
+			#pretvaranje parsiranih linija u markdown type
+			for line in sol: 
+				done = 0
+				for el in headings:
+					if (line.startswith(el)):
+						if (el == "Pojašnjenje " and (ulaz + izlaz) != 0):
+							parsed.append("```")
+							ulaz = 0
+							izlaz = 0
+						if (el == "Pojašnjenje "):
+							parsed.append(pars_params["infokup"][2019]["headings"][el] + line)
+						else:
+							parsed.append(pars_params["infokup"][2019]["headings"][el])
+						done = 1
+
+				for el in io:
+					if (line.startswith(el)):
+						if (ulaz or izlaz):
+							parsed.append("```")
+						if (prvi == 0):
+							prvi = 1
+							parsed.append("##Probni primjeri")
+						parsed.append(pars_params["infokup"][2019]["io"][el] + line)
+						parsed.append("```")
+						done = 1
+						if (el == "ulaz"):
+							ulaz = 1
+						if (el == "izlaz"):
+							izlaz = 1
+						parsed.append
+				if done == 0:
+					parsed.append(line)
+
+			if (izlaz == 1):
+				parsed.append("```")
+			sol = "\n".join(parsed)
+			fp.write(sol)
+		elif info[1] >= 2016 and info[1] <= 2017:
+			fp = codecs.open("parsed.txt", "w", "utf-8")
+			text = ""
+			for i in range(l, r):
+				if pdf_or_text == 0:
+					rev = pages[i][::-1]
+					lenght = len(pages[i])
+					page = ""
+
+					first = 0
+					cnt = 0
+					while (cnt < 4):
+						if (pages[i][first] == '\n'):
+							cnt += 1
+						first += 1
+
+					for j in range(lenght - 2, 0, -1):
+						if (pages[i][j] == '\n'):
+							page = pages[i][first:j]
+							break
+				else:
+					page = pages[i]
+
+				text += page + '\n'
+
+			sol = text.split('\n')
+			sol = sol[1:]
+
+			#parametri
+			parsed = []
+			izlaz = 0
+			ulaz = 0
+
+			headings = pars_params["infokup"][2016]["headings"].keys()
+			io = pars_params["infokup"][2016]["io"].keys()
+
+			#dodatno namjestanje
+			sol2 = []
+			for line in sol:
+				if (not_empty(line) == 0):
+					continue
+				if (line.startswith("Pojašnjenje")):
+					prva_dt = 0
+					for i in range(0, 1000):
+						if (line[i] == ':'):
+							prva_dt = i
+							break
+					sol2.append(line[:prva_dt + 1])
+					sol2.append(line[prva_dt + 2:])
+				else:
+					sol2.append(line)
+			sol = sol2
+
+			#pretvaranje parsiranih linija u markdown type
+			for line in sol: 
+				done = 0
+				for el in headings:
+					if (line.startswith(el)):
+						if (el == "Pojašnjenje " and (izlaz | ulaz) != 0):
+							parsed.append("```")
+							izlaz = ulaz = 0
+						if (el == "Primjeri test podataka"):
+							parsed.append("##Probni primjeri")
+						else:
+							parsed.append(pars_params["infokup"][2016]["headings"][el] + line)
+						done = 1
+
+				for el in io:
+					if (line.startswith(el)):
+						if (ulaz or izlaz):
+							parsed.append("```")
+						parsed.append(pars_params["infokup"][2016]["io"][el] + line)
+						parsed.append("```")
+						done = 1
+						if (el == "ulaz"):
+							ulaz = 1
+						if (el == "izlaz"):
+							izlaz += 1
+						parsed.append
+				if done == 0:
+					parsed.append(line)
+
+			sol = "\n".join(parsed)
+			fp.write(sol)
+		else:
+			fp = codecs.open("parsed.txt", "w", "utf-8")
+			text = ""
+
+			for i in range(l, r):
+				if pdf_or_text == 0:
+					rev = pages[i][::-1]
+					lenght = len(pages[i])
+					page = ""
+
+					first = 0
+					cnt = 0
+					while (cnt < 4):
+						if (pages[i][first] == '\n'):
+							cnt += 1
+						first += 1
+
+					for j in range(lenght - 2, 0, -1):
+						if (pages[i][j] == '\n'):
+							page = pages[i][first:j]
+							break
+				else:
+					page = pages[i]
+
+				# for j in range(lenght - 2, 0, -1):
+				# 	if (pages[i][j] == '\n'):
+				# 		page = pages[i][first:j]
+				# 		break
+				#print(pages[i])
+				#print(pages[i])
+				text += page + '\n'
+
+			sol = text.split('\n')
+
+			#parametri
+			parsed = []
+			izlaz = 0
+			ulaz = 0
+
+			headings = pars_params["infokup"][2015]["headings"].keys()
+			io = pars_params["infokup"][2015]["io"].keys()
+
+			#dodatno namjestanje
+			sol2 = []
+			for line in sol:
+				if (not_empty(line) == 0):
+					continue
+				if (line.startswith("PRIMJERI TEST PODATAKA")):
+					continue
+				if (line.startswith("Pojašnjenje ")):
+					prva_dt = 0
+					for i in range(0, 1000):
+						if (line[i] == ':'):
+							prva_dt = i
+							break
+					sol2.append(line[:prva_dt + 1])
+					sol2.append(line[prva_dt + 2:])
+				else:
+					sol2.append(line)
+			sol = sol2
+
+			prvi = 0
+			#pretvaranje parsiranih linija u markdown type
+			for line in sol: 
+				done = 0
+				for el in headings:
+					if (line.startswith(el)):
+						if (el == "Pojašnjenje " and (ulaz + izlaz) != 0):
+							parsed.append("```")
+							ulaz = 0
+							izlaz = 0
+						if (el == "Pojašnjenje "):
+							parsed.append(pars_params["infokup"][2015]["headings"][el] + line)
+						else:
+							parsed.append(pars_params["infokup"][2015]["headings"][el])
+						done = 1
+
+				for el in io:
+					if (line.startswith(el)):
+						if (ulaz or izlaz):
+							parsed.append("```")
+						parsed.append(pars_params["infokup"][2015]["io"][el] + line)
+						parsed.append("```")
+						done = 1
+						if (el == "ulaz"):
+							ulaz = 1
+						if (el == "izlaz"):
+							izlaz = 1
+						parsed.append
+				if done == 0:
+					parsed.append(line)
+
+			if (izlaz == 1):
+				parsed.append("```")
 			sol = "\n".join(parsed)
 			fp.write(sol)
 
