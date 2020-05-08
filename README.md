@@ -1,7 +1,7 @@
 # task-scrapper
 Program za pretvaranje pdf-ova zadataka s infokupa i honi-ja u markdown za evaluator.
 
-## trenutno podržane godine:
+## Podržane godine:
 honi: 2008 - 2020
 
 infokup: 2012 - 2020
