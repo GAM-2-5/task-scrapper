@@ -1,0 +1,71 @@
+Adresa u IPv4 protokolu je 32-bitni binarni broj koji se obično zapisuje tako da se podjeli u četiri 8-bitna
+broja te se ta četiri broja pretvore u dekadski sustav i zapišu s lijeva na desno odvojeni točkama. Tako je,
+na primjer, 18.62.96.0 zapis adrese 00010010 00111110 01100000 00000000 (razmaci su umetnuti samo za
+lakše čitanje).
+Podmreža je skup adresa koji se opisuje pomoću jedne adrese i prefiksa – cijelog broja između 0 i 32.
+Podmreža sa adresom D i prefiksom P sadrži točno one adrese X koje se sa D podudaraju u prvih P
+binarnih znamenaka s lijeva. Podmrežu zapisujemo tako da zapišemo adresu i prefiks odvojene kosom
+crtom ‘/’. Također, pravilo je da kod zapisivanja podmreže, adresa D ima svojstvo da su sve binarne
+znamenke nakon P-te slijeva jednake nuli.
+Tako na primjer, podmreža 18.62.96.0/24 sadrži točno 256 adresa i to sve adrese između 18.62.96.0 i
+18.62.96.255, dok podmreža 0.0.0.0/0 sadrži svih 232 mogućih adresa.
+Podzadatak A: Napišite program koji će za zadanu adresu i niz podmreža odrediti kojim podmrežama
+adresa pripada, a kojima ne.
+Podzadatak B: Za zadani niz podmreža također je potrebno odrediti duljinu njegovog najkraćeg zapisa.
+Točnije, neka je A skup svih adresa koji pripadaju barem jednoj zadanoj podmreži (drugim riječima, A je
+unija svih zadanih podmreža). Vaš program mora odrediti najmanji broj K tako da je moguće A prikazati
+kao uniju nekih K podmreža (koje su možda različite od zadanih podmreža).
+ULAZNI PODACI
+U prvom redu nalazi se prirodni broj, N (1 ≤ N ≤ 200) - broj podmreža. U svakom od sljedećih N redova
+nalazi se opis jedne podmreže - niz znakova oblika 'A1.A2.A3.A4/P' gdje su A1, A2, A3, A4 cijeli brojevi
+između 0 i 255 uključivo, a P cijeli broj između 0 i 32 uključivo.
+Za svaku adresu će vrijediti da su sve znamenke u binarnom zapisu nakon P-te znamenke s lijeva jednake
+nuli. Dozvoljeno je da se ista podmreža pojavljuje više puta te da su neke podmreže u potpunosti
+sadržane u drugima.
+U sljedećem redu nalazi se jedna adresa - niz znakova oblika 'A1.A2.A3.A4' gdje su A1, A2, A3, A4 cijeli
+brojevi između 0 i 255 uključivo.
+Jedini znakovi koji se pojavljuju u opisu adrese su znamenke i znak '.' (točka). Jedini znakovi koji se
+pojavljuju u opisu podmreže su znamenke te znakovi '.' (točka) i '/' (kosa crta prema naprijed).
+IZLAZNI PODACI
+U prvi red potrebno je ispisati niz od točno N znakova bez razmaka. K-ti po redu znak treba biti ‘1’ ako
+zadana adresa pripada K-toj po redu podmreži s ulaza, a ‘0’ inače.
+U drugi red potrebno je ispisati traženu duljinu najkraćeg zapisa zadanog niza podmreža.
+BODOVANJE
+Ukoliko je prvi red izlaza ispravan natjecatelj dobiva 30% bodova za taj test podatak.
+Ukoliko je prvi red neispravan, natjecatelj dobiva nula bodova čak i ako je drugi red ispravan.
+PRIMJERI TEST PODATAKA
+ulaz
+3
+129.255.0.0/27
+129.255.0.0/32
+129.255.0.0/32
+128.0.0.0
+izlaz
+000
+1
+ulaz
+4
+2.0.0.0/8
+3.0.0.0/8
+64.0.0.0/3
+66.0.0.0/8
+66.123.0.7
+izlaz
+0011
+2
+ulaz
+4
+58.128.239.128/26
+58.128.239.192/26
+58.128.239.0/25
+58.128.239.192/26
+58.128.239.255
+izlaz
+0101
+1
+Pojašnjenje prvog primjera: Sve adrese pokrivene navedenim podmrežama mogu se opisati pomoću samo
+jedne podmreže: 129.255.0.0/27.
+Pojašnjenje drugog primjera: Sve adrese pokrivene navedenim podmrežama mogu se opisati pomoću
+dvije podmreže: 2.0.0.0/7 te 64.0.0.0/3.
+Pojašnjenje trećeg primjera: Sve adrese pokrivene navedenim podmrežama mogu se opisati pomoću
+jedne podmreže: 58.128.239.0/24.
